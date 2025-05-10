@@ -1,0 +1,44 @@
+{
+  "name": "whatsapp-news-aggregator",
+  "version": "1.0.0",
+  "description": "A WhatsApp-based news aggregation system powered by AI and integrated with Google Drive",
+  "main": "dist/index.js",
+  "scripts": {
+    "start": "npm run build && node dist/index.js",
+    "dev": "ts-node-dev --respawn --transpile-only src/index.ts",
+    "build": "tsc",
+    "test": "jest",
+    "lint": "eslint . --ext .ts",
+    "type-check": "tsc --noEmit"
+  },
+  "dependencies": {
+    "express": "^4.18.3",
+    "dotenv": "^16.4.5",
+    "whatsapp-web.js": "^1.27.0",
+    "googleapis": "^133.0.0",
+    "axios": "^1.6.7",
+    "openai": "^4.28.0",
+    "mongoose": "^8.2.0",
+    "qrcode-terminal": "^0.12.0",
+    "qrcode": "^1.5.3"
+  },
+  "devDependencies": {
+    "@types/express": "^4.17.21",
+    "@types/node": "^20.11.24",
+    "@types/jest": "^29.5.12",
+    "@typescript-eslint/eslint-plugin": "^7.1.0",
+    "@typescript-eslint/parser": "^7.1.0",
+    "@types/qrcode": "^1.5.5",
+    "eslint": "^8.57.0",
+    "jest": "^29.7.0",
+    "ts-jest": "^29.1.2",
+    "ts-node": "^10.9.2",
+    "ts-node-dev": "^2.0.0",
+    "typescript": "^5.3.3"
+  },
+  "engines": {
+    "node": ">=22.15.0"
+  },
+  "author": "",
+  "license": "MIT"
+}
