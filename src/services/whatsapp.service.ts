@@ -4,7 +4,7 @@ import QRCode from 'qrcode';
 import path from 'path';
 import fs from 'fs';
 
-import { GoogleSheetsService } from './google-sheets.service';
+import { GoogleSheetsService } from '../services/google-sheets.service';
 
 export class WhatsAppService {
     private client: Client;
@@ -131,20 +131,50 @@ export class WhatsAppService {
         } catch (error) {
             console.error('Error saving message to Google Sheets:', error);
         }
-
         // Automatically react with thumbs up emoji
         await autoReact(message);
     }
 
     private async handleMyOwnMessage(message: Message): Promise<void> {
         this.logMessage(message, true);
-        
-        // Save message to Google Sheets
-        try {
-            await this.googleSheetsService.saveMessage(message);
-        } catch (error) {
-            console.error('Error saving message to Google Sheets:', error);
+
+        // If message is exactly '/interest', load all interests and reply
+        if (message.body.trim().toLowerCase() === '/interest') {
+            try {
+                const interests = await this.googleSheetsService.loadInterests();
+                if (interests.length === 0) {
+                    await this.sendMessage(message.from, 'No interests recorded yet.');
+                } else {
+                    const formattedInterests = interests
+                        .map(i => `• ${i.interest}`)
+                        .join('\n');
+                    await this.sendMessage(message.from, `Here are all recorded interests:\n${formattedInterests}`);
+                }
+            } catch (error) {
+                console.error('Error loading interests:', error);
+                await this.sendMessage(message.from, 'Error loading interests. Please try again later.');
+            }
+        } else if (message.body.trim().toLowerCase().startsWith('/interest')) {
+            const interest = message.body.trim().substring('/interest'.length).trim();
+            if (interest.length > 0) {
+                try {
+                    await this.googleSheetsService.saveInterest(message.from, interest);
+                } catch (error) {
+                    console.error('Error saving interest to Google Sheets:', error);
+                }
+            } else {
+                console.warn('Interest command received but no interest provided.');
+            }
+        } else {
+            // Save message to Google Sheets as usual
+            try {
+                await this.googleSheetsService.saveMessage(message);
+            } catch (error) {
+                console.error('Error saving message to Google Sheets:', error);
+            }
         }
+        // Automatically react with thumbs up emoji
+        await autoReact(message);
     }
 
     public async sendMessage(to: string, message: string): Promise<void> {

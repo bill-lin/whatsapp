@@ -65,4 +65,45 @@ export class GoogleSheetsService {
             throw error;
         }
     }
+
+    public async saveInterest(from: string, interest: string): Promise<void> {
+        try {
+            const timestamp = new Date().toLocaleString();
+            const row = [timestamp, from, interest];
+
+            await this.sheets.spreadsheets.values.append({
+                spreadsheetId: this.spreadsheetId,
+                range: `interests!A:C`,
+                valueInputOption: 'USER_ENTERED',
+                requestBody: {
+                    values: [row]
+                }
+            });
+
+            console.log('Interest saved to Google Sheets (interests sheet) successfully');
+        } catch (error) {
+            console.error('Error saving interest to Google Sheets:', error);
+            throw error;
+        }
+    }
+
+    public async loadInterests(): Promise<Array<{interest: string }>> {
+        try {
+            const response = await this.sheets.spreadsheets.values.get({
+                spreadsheetId: this.spreadsheetId,
+                range: 'interests!C:C'
+            });
+
+            const rows = response.data.values || [];
+            // Filter out empty rows and map to interest objects
+            return rows
+                .filter(row => row && row[0] && row[0].trim() !== ''&& row[0].trim() !== 'interest')
+                .map(row => ({
+                    interest: row[0].trim()
+                }));
+        } catch (error) {
+            console.error('Error loading interests from Google Sheets:', error);
+            throw error;
+        }
+    }
 } 
