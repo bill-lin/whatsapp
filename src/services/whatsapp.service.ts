@@ -4,12 +4,15 @@ import QRCode from 'qrcode';
 import path from 'path';
 import fs from 'fs';
 
+import { GoogleSheetsService } from './google-sheets.service';
+
 export class WhatsAppService {
     private client: Client;
     private qrDir: string;
     private sessionDir: string;
     private sessionDataDir: string;
     private static readonly BOT_PREFIX = '(from Bot) ';
+    private googleSheetsService: GoogleSheetsService;
 
     constructor() {
         // Create directories if they don't exist
@@ -33,6 +36,9 @@ export class WhatsAppService {
                 dataPath: this.sessionDir
             })
         });
+
+        // Initialize Google Sheets service
+        this.googleSheetsService = new GoogleSheetsService();
 
         this.setupEventHandlers();
     }
@@ -90,7 +96,7 @@ export class WhatsAppService {
         console.log('WhatsApp client disconnected!');
     }
 
-    private async handleMessage(message: Message): Promise<void> {
+    private logMessage(message: Message, isOwnMessage: boolean = false): void {
         const messageInfo = {
             from: message.from,
             to: message.to,
@@ -103,7 +109,7 @@ export class WhatsAppService {
             isFromMe: message.fromMe
         };
 
-        console.log('📱 New WhatsApp Message Received:');
+        console.log(`📱 New WhatsApp Message ${isOwnMessage ? 'Created' : 'Received'}:`);
         console.log('----------------------------------------');
         console.log(`From: ${messageInfo.from} ${messageInfo.isFromMe ? '(Self)' : ''}`);
         console.log(`To: ${messageInfo.to}`);
@@ -114,37 +120,31 @@ export class WhatsAppService {
         console.log(`Is Forwarded: ${messageInfo.isForwarded}`);
         console.log(`Is Status: ${messageInfo.isStatus}`);
         console.log('----------------------------------------');
+    }
 
+    private async handleMessage(message: Message): Promise<void> {
+        this.logMessage(message);
+        
+        // Save message to Google Sheets
+        try {
+            await this.googleSheetsService.saveMessage(message);
+        } catch (error) {
+            console.error('Error saving message to Google Sheets:', error);
+        }
 
+        // Automatically react with thumbs up emoji
+        await autoReact(message);
     }
 
     private async handleMyOwnMessage(message: Message): Promise<void> {
-        const messageInfo = {
-            from: message.from,
-            to: message.to,
-            body: message.body,
-            timestamp: new Date().toLocaleString(),
-            type: message.type,
-            hasMedia: message.hasMedia,
-            isForwarded: message.isForwarded,
-            isStatus: message.isStatus,
-            isFromMe: true
-        };
-
-        console.log('📱 New WhatsApp Message Created:');
-        console.log('----------------------------------------');
-        console.log(`From: ${messageInfo.from} (Self)`);
-        console.log(`To: ${messageInfo.to}`);
-        console.log(`Message: ${messageInfo.body}`);
-        console.log(`Time: ${messageInfo.timestamp}`);
-        console.log(`Type: ${messageInfo.type}`);
-        console.log(`Has Media: ${messageInfo.hasMedia}`);
-        console.log(`Is Forwarded: ${messageInfo.isForwarded}`);
-        console.log(`Is Status: ${messageInfo.isStatus}`);
-        console.log('----------------------------------------');
-        // Automatically react with thumbs up emoji
-        await autoReact(message);
-        // TODO: Implement message handling logic
+        this.logMessage(message, true);
+        
+        // Save message to Google Sheets
+        try {
+            await this.googleSheetsService.saveMessage(message);
+        } catch (error) {
+            console.error('Error saving message to Google Sheets:', error);
+        }
     }
 
     public async sendMessage(to: string, message: string): Promise<void> {
