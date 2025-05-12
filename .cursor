@@ -1,0 +1,58 @@
+{
+    "projectGuidelines": {
+        "developmentGuide": "docs/development-guide.md",
+        "enforceGuidelines": true
+    },
+    "codeStyle": {
+        "typescript": {
+            "namingConventions": {
+                "variables": "camelCase",
+                "functions": "camelCase",
+                "classes": "PascalCase",
+                "interfaces": "PascalCase",
+                "constants": "UPPER_SNAKE_CASE",
+                "booleanPrefixes": ["is", "has", "should"]
+            },
+            "maxFileLength": 300,
+            "maxFunctionLength": 20,
+            "preferEarlyReturns": true,
+            "strictTypeChecking": true,
+            "avoidAny": true
+        }
+    },
+    "documentation": {
+        "requireComments": {
+            "complexLogic": true,
+            "businessRules": true,
+            "apiEndpoints": true
+        },
+        "inlineDocumentation": true
+    },
+    "testing": {
+        "requireTests": {
+            "criticalFunctionality": true,
+            "edgeCases": true
+        },
+        "testPattern": "**/*.test.ts"
+    },
+    "errorHandling": {
+        "requireTryCatch": true,
+        "requireErrorMessages": true,
+        "requireErrorLogging": true
+    },
+    "security": {
+        "noHardcodedSecrets": true,
+        "requireInputValidation": true,
+        "requireAuthChecks": true
+    },
+    "versionControl": {
+        "requireCommitMessages": true,
+        "branchNaming": "feature/*"
+    },
+    "codeReview": {
+        "checkSecurity": true,
+        "checkErrorHandling": true,
+        "checkTestCoverage": false,
+        "checkCodeSmells": true
+    }
+} 

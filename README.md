@@ -9,6 +9,7 @@ This project's documentation is split into the following sections:
 1. [Requirements](docs/requirements.md) - Detailed project requirements and specifications
 2. [Technical Design](docs/technical-design.md) - Architecture and technical implementation details
 3. [Project Plan](docs/project-plan.md) - Development timeline and milestones
+4. [Development Guide](docs/development-guide.md) - Coding standards and best practices
 
 ## Quick Start
 
@@ -30,9 +31,21 @@ This project's documentation is split into the following sections:
 └── config/           # Configuration files
 ```
 
-## Contributing
+## Development
 
-Please read our [Contributing Guidelines](CONTRIBUTING.md) before submitting pull requests.
+Before contributing to this project, please:
+
+1. Read the [Development Guide](docs/development-guide.md) for coding standards and best practices
+2. Review the [Technical Design](docs/technical-design.md) to understand the architecture
+3. Follow the [Contributing Guidelines](CONTRIBUTING.md) for pull requests
+
+## Available Scripts
+
+- `npm run dev` - Start development server
+- `npm run build` - Build for production
+- `npm run test` - Run tests
+- `npm run lint` - Run linter
+- `npm run format` - Format code
 
 ## License
 
