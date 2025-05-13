@@ -5,6 +5,7 @@ import path from 'path';
 import fs from 'fs';
 
 import { GoogleSheetsService } from '../services/google-sheets.service';
+import { OpenAIService } from '../services/openai.service';
 
 export class WhatsAppService {
     private client: Client;
@@ -13,6 +14,7 @@ export class WhatsAppService {
     private sessionDataDir: string;
     private static readonly BOT_PREFIX = '(from Bot) ';
     private googleSheetsService: GoogleSheetsService;
+    private openAIService: OpenAIService;
 
     constructor() {
         // Create directories if they don't exist
@@ -37,8 +39,9 @@ export class WhatsAppService {
             })
         });
 
-        // Initialize Google Sheets service
+        // Initialize services
         this.googleSheetsService = new GoogleSheetsService();
+        this.openAIService = new OpenAIService();
 
         this.setupEventHandlers();
     }
@@ -131,15 +134,39 @@ export class WhatsAppService {
         } catch (error) {
             console.error('Error saving message to Google Sheets:', error);
         }
-        // Automatically react with thumbs up emoji
-        await autoReact(message);
+
     }
 
     private async handleMyOwnMessage(message: Message): Promise<void> {
         this.logMessage(message, true);
 
+        // Handle news command
+        if (message.body.trim().toLowerCase() === '/news') {
+            try {
+                const news = await this.openAIService.getLatestNews();
+                await this.sendMessage(message.from, news);
+            } catch (error) {
+                console.error('Error getting latest news:', error);
+                await this.sendMessage(message.from, 'Error fetching latest news. Please try again later.');
+            }
+        }
+        // Handle topic-specific news
+        else if (message.body.trim().toLowerCase().startsWith('/news ')) {
+            const topic = message.body.trim().substring('/news '.length).trim();
+            if (topic.length > 0) {
+                try {
+                    const news = await this.openAIService.getLatestNews(topic);
+                    await this.sendMessage(message.from, news);
+                } catch (error) {
+                    console.error('Error getting news for topic:', error);
+                    await this.sendMessage(message.from, 'Error fetching news for the topic. Please try again later.');
+                }
+            } else {
+                await this.sendMessage(message.from, 'Please specify a topic after /news command.');
+            }
+        }
         // If message is exactly '/interest', load all interests and reply
-        if (message.body.trim().toLowerCase() === '/interest') {
+        else if (message.body.trim().toLowerCase() === '/interest') {
             try {
                 const interests = await this.googleSheetsService.loadInterests();
                 if (interests.length === 0) {
@@ -148,7 +175,16 @@ export class WhatsAppService {
                     const formattedInterests = interests
                         .map(i => `• ${i.interest}`)
                         .join('\n');
-                    await this.sendMessage(message.from, `Here are all recorded interests:\n${formattedInterests}`);
+                    
+                    // Get news analysis of interests
+                    const news = await this.openAIService.getLatestNews(
+                        interests.map(i => i.interest).join(', ')
+                    );
+                    
+                    await this.sendMessage(
+                        message.from,
+                        `Here are all recorded interests:\n${formattedInterests}\n\nLatest News Related to Your Interests:\n${news}`
+                    );
                 }
             } catch (error) {
                 console.error('Error loading interests:', error);
@@ -158,7 +194,17 @@ export class WhatsAppService {
             const interest = message.body.trim().substring('/interest'.length).trim();
             if (interest.length > 0) {
                 try {
+                    // Get news about the interest
+                    const news = await this.openAIService.getLatestNews(interest);
+                    
+                    // Save interest
                     await this.googleSheetsService.saveInterest(message.from, interest);
+                    
+                    // Send confirmation with news
+                    await this.sendMessage(
+                        message.from,
+                        `Interest saved! Here's the latest news about ${interest}:\n\n${news}`
+                    );
                 } catch (error) {
                     console.error('Error saving interest to Google Sheets:', error);
                 }
