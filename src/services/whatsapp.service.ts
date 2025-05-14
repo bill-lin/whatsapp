@@ -144,7 +144,7 @@ export class WhatsAppService {
         if (message.body.trim().toLowerCase() === '/news') {
             try {
                 const news = await this.openAIService.getLatestNews();
-                await this.sendMessage(message.from, news);
+                await this.sendMessage(message.from, `📰 Latest News:\n\n${news}`);
             } catch (error) {
                 console.error('Error getting latest news:', error);
                 await this.sendMessage(message.from, 'Error fetching latest news. Please try again later.');
@@ -156,7 +156,7 @@ export class WhatsAppService {
             if (topic.length > 0) {
                 try {
                     const news = await this.openAIService.getLatestNews(topic);
-                    await this.sendMessage(message.from, news);
+                    await this.sendMessage(message.from, `📰 Latest News about ${topic}:\n\n${news}`);
                 } catch (error) {
                     console.error('Error getting news for topic:', error);
                     await this.sendMessage(message.from, 'Error fetching news for the topic. Please try again later.');
@@ -176,14 +176,13 @@ export class WhatsAppService {
                         .map(i => `• ${i.interest}`)
                         .join('\n');
                     
-                    // Get news analysis of interests
-                    const news = await this.openAIService.getLatestNews(
-                        interests.map(i => i.interest).join(', ')
-                    );
+                    // Get latest news about interests
+                    const interestTopics = interests.map(i => i.interest).join(', ');
+                    const news = await this.openAIService.getLatestNews(interestTopics);
                     
                     await this.sendMessage(
                         message.from,
-                        `Here are all recorded interests:\n${formattedInterests}\n\nLatest News Related to Your Interests:\n${news}`
+                        `Here are all recorded interests:\n${formattedInterests}\n\n📰 Latest News Related to Your Interests:\n\n${news}`
                     );
                 }
             } catch (error) {
@@ -194,16 +193,16 @@ export class WhatsAppService {
             const interest = message.body.trim().substring('/interest'.length).trim();
             if (interest.length > 0) {
                 try {
-                    // Get news about the interest
-                    const news = await this.openAIService.getLatestNews(interest);
-                    
                     // Save interest
                     await this.googleSheetsService.saveInterest(message.from, interest);
+                    
+                    // Get news about the interest
+                    const news = await this.openAIService.getLatestNews(interest);
                     
                     // Send confirmation with news
                     await this.sendMessage(
                         message.from,
-                        `Interest saved! Here's the latest news about ${interest}:\n\n${news}`
+                        `Interest "${interest}" saved! Here's the latest news about it:\n\n${news}`
                     );
                 } catch (error) {
                     console.error('Error saving interest to Google Sheets:', error);
@@ -219,8 +218,11 @@ export class WhatsAppService {
                 console.error('Error saving message to Google Sheets:', error);
             }
         }
-        // Automatically react with thumbs up emoji
-        await autoReact(message);
+        // Automatically react my own with thumbs up emoji
+        if(message.author === process.env.TEST_PHONE_NUMBER){
+            await autoReact(message);
+        }
+      
     }
 
     public async sendMessage(to: string, message: string): Promise<void> {

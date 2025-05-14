@@ -11,7 +11,9 @@ export class OpenAIService {
 
     public async getLatestNews(topic?: string): Promise<string> {
         try {
-            console.log('Sending request to OpenAI with topic:', topic);
+            console.log('Getting news about:', topic || 'latest breaking news');
+            
+            // Using Azure OpenAI responses API with Bing Search grounding
             const response = await this.openai.responses.create({
                 model: "gpt-4o",
                 tools: [{ type: "web_search_preview" }],
@@ -20,9 +22,9 @@ export class OpenAIService {
                     : `What are the top breaking news stories today? Provide a brief summary of the most important developments.`
             });
 
-            console.log('OpenAI Response:', JSON.stringify(response, null, 2));
-            const news = response.output_text || 'No news available';
-            return `📰 Latest News:\n\n${news}`;
+            console.log('OpenAI Response received');
+            
+            return response.output_text || 'No news available';
         } catch (error) {
             console.error('Error getting latest news:', error);
             throw error;
